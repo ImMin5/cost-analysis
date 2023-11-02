@@ -176,7 +176,7 @@ class JobService(BaseService):
         data_source_id = data_source_vo.data_source_id
         job_id = job_task_vo.job_id
 
-        if self._is_job_canceled(job_id, domain_id):
+        if self._is_job_failed(job_id, domain_id):
             self.job_task_mgr.change_canceled_status(job_task_vo)
         else:
             job_task_vo = self.job_task_mgr.change_in_progress_status(job_task_vo)
@@ -217,7 +217,7 @@ class JobService(BaseService):
                         tag_keys = self._append_tag_keys(tag_keys, cost_data)
                         additional_info_keys = self._append_additional_info_keys(additional_info_keys, cost_data)
 
-                    if self._is_job_canceled(job_id, domain_id):
+                    if self._is_job_failed(job_id, domain_id):
                         self.job_task_mgr.change_canceled_status(job_task_vo)
                         is_canceled = True
                         break
@@ -418,10 +418,10 @@ class JobService(BaseService):
 
         self.cost_mgr.create_cost(cost_data, execute_rollback=False)
 
-    def _is_job_canceled(self, job_id, domain_id):
+    def _is_job_failed(self, job_id, domain_id):
         job_vo: Job = self.job_mgr.get_job(job_id, domain_id)
 
-        if job_vo.status == 'CANCELED':
+        if ['CANCELED', 'FAILURE'] in job_vo.status:
             return True
         else:
             return False
