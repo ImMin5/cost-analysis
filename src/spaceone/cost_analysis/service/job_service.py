@@ -50,7 +50,7 @@ class JobService(BaseService):
 
         for data_source_vo in self._get_all_data_sources():
             try:
-                self.create_cost_job(data_source_vo, {})
+                self.create_cost_job(data_source_vo, {'sync_mode': 'SCHEDULED'})
             except Exception as e:
                 _LOGGER.error(f'[create_jobs_by_data_source] sync error: {e}', exc_info=True)
 
@@ -637,6 +637,9 @@ class JobService(BaseService):
         return self.data_source_mgr.filter_data_sources(state='ENABLED', data_source_type='EXTERNAL')
 
     def _check_duplicate_job(self, data_source_id, domain_id, this_job_vo: Job):
+        if this_job_vo.options.get('sync_mode', 'SCHEDULED') == 'MANUAL':
+            return False
+
         query = {
             'filter': [
                 {'k': 'data_source_id', 'v': data_source_id, 'o': 'eq'},
@@ -652,10 +655,13 @@ class JobService(BaseService):
 
         for job_vo in job_vos:
             if job_vo.created_at >= duplicate_job_time:
+                # Change this job status to ERROR
                 return True
             else:
+                # Change previous job status to CANCELED
                 self.job_mgr.change_canceled_status(job_vo)
 
+        # No duplicate job
         return False
 
     @staticmethod

@@ -249,7 +249,8 @@ class DataSourceService(BaseService):
         domain_id = params['domain_id']
         job_options = {
             'no_preload_cache': params.get('no_preload_cache', False),
-            'start': params.get('start')
+            'start': params.get('start'),
+            'sync_mode': 'MANUAL'
         }
 
         data_source_vo: DataSource = self.data_source_mgr.get_data_source(data_source_id, domain_id)
